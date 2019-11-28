@@ -13,6 +13,7 @@ eraser_img = os.path.join(cur_path, 'icons/eraser.png')
 brush_img = os.path.join(cur_path, 'icons/brush.png')
 color_img = os.path.join(cur_path, 'icons/color.png')
 text_img = os.path.join(cur_path, 'icons/text.png')
+rounder_img = os.path.join(cur_path, 'icons/rounder.png')
 
 root_color = '#b3bab9'
 bg_color = '#cce8e3'

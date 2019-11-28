@@ -6,11 +6,13 @@ from tkinter import colorchooser
 from tkinter.font import Font
 from PIL import Image, ImageTk
 import tkfontchooser
-
 import configure as cnf
 
 class App:
     def __init__(self, master):
+        self.item_list = [0, ]
+        self.cur_id = 0
+
         self.activebutton = 'pen'
         self.width = tk.IntVar()
         self.font = ('Arial', 10, 'normal', 'roman', 0, 0)
@@ -28,6 +30,8 @@ class App:
         self.b_widht = None
         self.e_width = None
 
+        self.rounder__x = False
+
         self.master = master
         self.master.grid()
         self.master.title('SB Paint')
@@ -41,7 +45,7 @@ class App:
 
         self.file_menu = tk.Menu(self.main_menu, tearoff = False)
         self.main_menu.add_cascade(label = 'File', menu = self.file_menu)
-        self.file_menu.add_command(label = 'New', command = None, accelerator = 'Ctrl+N')
+        self.file_menu.add_command(label = 'New', command = self.new_canvas, accelerator = 'Ctrl+N')
         self.file_menu.add_command(label = 'Open', command = None, accelerator = 'Ctrl+O')
         self.file_menu.add_command(label = 'Save', command = None, accelerator = 'Ctrl+S', state = tk.DISABLED)
         self.file_menu.add_command(label = 'Save as', command = None, accelerator = 'Ctrl+Shift+S', state = tk.DISABLED)
@@ -50,7 +54,7 @@ class App:
 
         self.edit_menu = tk.Menu(self.main_menu, tearoff = False)
         self.main_menu.add_cascade(label = 'Edit', menu = self.edit_menu)
-        self.edit_menu.add_command(label = 'Undo', command = None, accelerator = 'Ctrl+Z', state = tk.DISABLED)
+        self.edit_menu.add_command(label = 'Undo', command = self.undo_canvas, accelerator = 'Ctrl+Z', state = tk.DISABLED)
         self.edit_menu.add_command(label = 'Redo', command = None, accelerator = 'Ctrl+Shift+Z', state = tk.DISABLED)
         self.edit_menu.add_separator()
         self.edit_menu.add_command(label = 'Copy', command = None, accelerator = 'Ctrl+C', state = tk.DISABLED)
@@ -74,6 +78,7 @@ class App:
         self.pencil_icon = tk.PhotoImage(file=cnf.pencil_img)
         self.eraser_icon = tk.PhotoImage(file=cnf.eraser_img)
         self.brush_icon = tk.PhotoImage(file=cnf.brush_img)
+        self.rounder_icon = tk.PhotoImage(file = cnf.rounder_img)
 
         self.pencil_button = ttk.Button(self.drawing_tools, image = self.pencil_icon, command = self.use_pen)
         self.pencil_button.grid(row = 0, column = 0)
@@ -83,6 +88,9 @@ class App:
 
         self.eraser_button = ttk.Button(self.drawing_tools, image = self.eraser_icon, command = self.use_eraser)
         self.eraser_button.grid(row = 0, column = 2)
+
+        self.rounder_button = ttk.Button(self.drawing_tools, image = self.rounder_icon, command = self.use_rounder)
+        self.rounder_button.grid(row = 1, column = 0)
 
         self.tool_frame2 = ttk.Frame(self.notebook, style = 'My.TFrame')
         self.tool_frame2.pack(fill = tk.BOTH, expand=True)
@@ -200,6 +208,9 @@ class App:
     def use_eraser(self):
         self.activebutton = 'eraser'
 
+    def use_rounder(self):
+        self.activebutton = 'rounder'
+
     def paint(self, event):
         xx, _ = self.xscroll.get()
         yy, _ = self.yscroll.get()
@@ -207,21 +218,32 @@ class App:
         xx = self.cnv_w*xx
         yy = self.cnv_h*yy
 
-        if self.activebutton == 'pen':
+        if self.activebutton == 'pen' or self.activebutton == 'rounder':
             tmp_fill = self.color_1
         elif self.activebutton == 'brush':
             tmp_fill = self.color_1
-        else:
+        elif self.activebutton == 'eraser':
             tmp_fill = self.color_2
 
         if self.old_x and self.old_y:
-            self.canvas.create_line(xx+self.old_x, yy+self.old_y, xx+event.x, yy+event.y, fill = tmp_fill, width = self.width.get())
+            self.cur_id = self.canvas.create_line(xx+self.old_x, yy+self.old_y, xx+event.x, yy+event.y, fill = tmp_fill, width = self.width.get())
+        if self.activebutton == 'rounder':
+            if self.rounder__x == True:
+                return None
+            else:
+                self.rounder__x = True
         self.old_x = event.x
         self.old_y = event.y
 
     def reset(self, event):
         self.old_x = None
         self.old_y = None
+        self.item_list.append(self.cur_id)
+        if self.activebutton == 'rounder':
+            if self.rounder__x == True:
+                self.rounder__x = False
+
+        self.edit_menu.entryconfig(0, state = tk.ACTIVE)
 
     def close_programme(self):
         inp = messagebox.askquestion('Quit', 'Do you really want to quit?')
@@ -325,6 +347,18 @@ for cancel''')
     def cancel__(self, event):
         self.canvas.unbind('<Button-1>')
         self.canvas.unbind('<Button-3>')
+
+    def new_canvas(self):
+        self.canvas.delete('all')
+
+    def undo_canvas(self):
+        for i in range(self.item_list[-2]+1, self.item_list[-1]+1):
+            self.canvas.delete(i)
+        self.item_list.pop()
+        if len(self.item_list) == 1:
+            self.edit_menu.entryconfig(0, state = tk.DISABLED)
+        self.edit_menu.entryconfig(1, state = tk.ACTIVE)
+
 
 if __name__ == '__main__':
     root = tk.Tk()
