@@ -48,7 +48,7 @@ class App:
         self.file_menu.add_command(label = 'New', command = self.new_canvas, accelerator = 'Ctrl+N')
         self.file_menu.add_command(label = 'Open', command = None, accelerator = 'Ctrl+O')
         self.file_menu.add_command(label = 'Save', command = None, accelerator = 'Ctrl+S', state = tk.DISABLED)
-        self.file_menu.add_command(label = 'Save as', command = None, accelerator = 'Ctrl+Shift+S', state = tk.DISABLED)
+        self.file_menu.add_command(label = 'Save as', command = self.save_image, accelerator = 'Ctrl+Shift+S', state = tk.DISABLED)
         self.file_menu.add_separator()
         self.file_menu.add_command(label = 'Quit', command = self.close_programme)
 
@@ -212,6 +212,7 @@ class App:
         self.activebutton = 'rounder'
 
     def paint(self, event):
+        tmp_width = self.width.get()
         xx, _ = self.xscroll.get()
         yy, _ = self.yscroll.get()
 
@@ -226,7 +227,10 @@ class App:
             tmp_fill = self.color_2
 
         if self.old_x and self.old_y:
-            self.cur_id = self.canvas.create_line(xx+self.old_x, yy+self.old_y, xx+event.x, yy+event.y, fill = tmp_fill, width = self.width.get())
+            if self.activebutton == 'pen':
+                self.cur_id = self.canvas.create_line(xx+self.old_x, yy+self.old_y, xx+event.x, yy+event.y, fill = tmp_fill)
+            else:
+                self.cur_id = self.canvas.create_line(xx+self.old_x, yy+self.old_y, xx+event.x, yy+event.y, fill = tmp_fill, width = tmp_width)
         if self.activebutton == 'rounder':
             if self.rounder__x == True:
                 return None
@@ -244,6 +248,7 @@ class App:
                 self.rounder__x = False
 
         self.edit_menu.entryconfig(0, state = tk.ACTIVE)
+        self.file_menu.entryconfig(3, state = tk.ACTIVE)
 
     def close_programme(self):
         inp = messagebox.askquestion('Quit', 'Do you really want to quit?')
@@ -358,6 +363,11 @@ for cancel''')
         if len(self.item_list) == 1:
             self.edit_menu.entryconfig(0, state = tk.DISABLED)
         self.edit_menu.entryconfig(1, state = tk.ACTIVE)
+
+    def save_image(self):
+        self.canvas.postscript(file = os.path.join(cnf.cur_path, 'IMG_SB_Paint.ps'), colormode = 'color')
+        img = Image.open(os.path.join(cnf.cur_path, 'IMG_SB_Paint.ps'))
+        img.save(os.path.join(cnf.cur_path, 'IMG_SB_Paint.png'), 'png')
 
 
 if __name__ == '__main__':
